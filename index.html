@@ -443,7 +443,15 @@ body {
     </div>
     <div class="form-group">
       <label>Order Number</label>
-      <input type="text" id="buyOrderNo" placeholder="Order number">
+      <input type="text" id="buyOrderNo" placeholder="W1234567890" maxlength="11" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label>Buyer Name (購入名義)</label>
+      <input type="text" id="buyBuyerName" placeholder="購入者名前">
+    </div>
+    <div class="form-group">
+      <label>Buyer Address (購入住所)</label>
+      <input type="text" id="buyBuyerAddr" placeholder="配送先住所">
     </div>
     <div class="form-group">
       <label>Email</label>
@@ -602,7 +610,9 @@ function saveBuyRecord() {
   const qty = parseInt(document.getElementById('buyQty').value) || 0;
   const price = parseFloat(document.getElementById('buyPrice').value) || 0;
   const status = document.getElementById('buyStatus').value;
-  const orderNo = document.getElementById('buyOrderNo').value.trim();
+  const orderNo = document.getElementById('buyOrderNo').value.trim().toUpperCase();
+  const buyerName = document.getElementById('buyBuyerName').value.trim();
+  const buyerAddr = document.getElementById('buyBuyerAddr').value.trim();
   const email = document.getElementById('buyEmail').value.trim();
   const cardType = document.getElementById('buyCardType').value;
   const cardLast4 = document.getElementById('buyCardLast4').value.trim();
@@ -610,12 +620,13 @@ function saveBuyRecord() {
 
   if (qty <= 0) { toast('Please enter quantity'); return; }
   if (price <= 0) { toast('Please enter unit price'); return; }
+  if (orderNo && !/^W\d{10}$/.test(orderNo)) { toast('Order# must be W + 10 digits'); return; }
 
   const data = loadData();
   data.buys.push({
     id: genId(),
     date: dateKey(selectedDate),
-    model, qty, price, status, orderNo, email,
+    model, qty, price, status, orderNo, buyerName, buyerAddr, email,
     cardType, cardLast4, cardAmount,
     createdAt: new Date().toISOString()
   });
@@ -625,6 +636,8 @@ function saveBuyRecord() {
   document.getElementById('buyQty').value = '1';
   document.getElementById('buyPrice').value = '';
   document.getElementById('buyOrderNo').value = '';
+  document.getElementById('buyBuyerName').value = '';
+  document.getElementById('buyBuyerAddr').value = '';
   document.getElementById('buyEmail').value = '';
   document.getElementById('buyCardLast4').value = '';
   document.getElementById('buyCardAmount').value = '';
@@ -681,6 +694,7 @@ function renderDailyRecords() {
 
   dayBuys.forEach(b => {
     const statusClass = b.status === '注文確定' ? 'badge-blue' : b.status === '注文あり' ? 'badge-orange' : 'badge-green';
+    const orderLink = b.orderNo ? `<a href="https://secure2.store.apple.com/jp/shop/order/list" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:underline;font-weight:600">${b.orderNo}</a>` : '';
     html += `
       <div class="record-item">
         <div class="record-icon buy">📥</div>
@@ -688,8 +702,9 @@ function renderDailyRecords() {
           <div class="title">${b.model} x${b.qty}</div>
           <div class="subtitle">
             <span class="badge ${statusClass}">${b.status}</span>
-            ${b.orderNo ? ' #' + b.orderNo : ''}
+            ${orderLink ? ' ' + orderLink : ''}
           </div>
+          <div class="subtitle">${b.buyerName || '-'} | ${b.buyerAddr || '-'}</div>
           <div class="subtitle">${b.cardType} ****${b.cardLast4} | ${b.email || '-'}</div>
         </div>
         <div class="record-amount">
