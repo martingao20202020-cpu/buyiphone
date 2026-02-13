@@ -180,11 +180,15 @@ body {
 .month-nav button { background: none; border: none; font-size: 20px; color: var(--primary); cursor: pointer; padding: 8px; }
 .month-nav .month-title { font-size: 17px; font-weight: 600; }
 
-/* Delete */
+/* Action buttons */
+.record-actions { display: flex; flex-direction: column; gap: 4px; margin-left: 8px; flex-shrink: 0; }
+.edit-btn {
+  background: var(--primary); color: white; border: none;
+  padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
+}
 .delete-btn {
   background: var(--danger); color: white; border: none;
   padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
-  margin-left: 8px; flex-shrink: 0;
 }
 
 /* Modal */
@@ -310,6 +314,27 @@ body {
       <button onclick="calMonthChange(1)">&rarr;</button>
     </div>
     <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="calSummaryTitle">Monthly Summary</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-value" id="calBuyTotal">¥0</div>
+        <div class="stat-label">Buy Total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="calSellTotal">¥0</div>
+        <div class="stat-label">Sell Total</div>
+      </div>
+      <div class="stat-box" id="calProfitBox">
+        <div class="stat-value" id="calProfit">¥0</div>
+        <div class="stat-label">Profit</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="calBuyQty">0</div>
+        <div class="stat-label">Buy Qty</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -509,6 +534,107 @@ body {
 
 <!-- Calendar Modal (date picker) -->
 <div class="modal-overlay" id="calendarModal">
+
+<!-- Edit Buy Modal -->
+<div class="modal-overlay" id="editBuyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit Buy Record</h2>
+      <button class="modal-close" onclick="closeModal('editBuyModal')">&times;</button>
+    </div>
+    <input type="hidden" id="editBuyId">
+    <div class="form-group">
+      <label>iPhone Model</label>
+      <select id="editBuyModel">
+        <option value="iPhone 17">iPhone 17</option>
+        <option value="iPhone 17 Pro">iPhone 17 Pro</option>
+        <option value="iPhone 17 Pro Max">iPhone 17 Pro Max</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="editBuyQty" min="1" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label>Unit Price (¥)</label>
+        <input type="number" id="editBuyPrice" inputmode="decimal">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="editBuyStatus">
+        <option value="注文確定">注文確定</option>
+        <option value="注文あり">注文あり</option>
+        <option value="発送">発送</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Order Number</label>
+      <input type="text" id="editBuyOrderNo" maxlength="11" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label>Buyer Name (購入名義)</label>
+      <input type="text" id="editBuyBuyerName">
+    </div>
+    <div class="form-group">
+      <label>Buyer Address (購入住所)</label>
+      <input type="text" id="editBuyBuyerAddr">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="editBuyEmail">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Card Type</label>
+        <select id="editBuyCardType">
+          <option value="VISA">VISA</option>
+          <option value="MasterCard">MasterCard</option>
+          <option value="JCB">JCB</option>
+          <option value="AMEX">AMEX</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Card Last 4</label>
+        <input type="text" id="editBuyCardLast4" maxlength="4" inputmode="numeric">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Card Amount (¥)</label>
+      <input type="number" id="editBuyCardAmount" inputmode="decimal">
+    </div>
+    <button class="btn btn-primary" onclick="saveEditBuy()">Save Changes</button>
+  </div>
+</div>
+
+<!-- Edit Sell Modal -->
+<div class="modal-overlay" id="editSellModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit Sell Record</h2>
+      <button class="modal-close" onclick="closeModal('editSellModal')">&times;</button>
+    </div>
+    <input type="hidden" id="editSellId">
+    <div class="form-group">
+      <label>iPhone Model</label>
+      <select id="editSellModel">
+        <option value="iPhone 17">iPhone 17</option>
+        <option value="iPhone 17 Pro">iPhone 17 Pro</option>
+        <option value="iPhone 17 Pro Max">iPhone 17 Pro Max</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Quantity</label>
+      <input type="number" id="editSellQty" min="1" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label>Sell Amount (¥ total)</label>
+      <input type="number" id="editSellAmount" inputmode="decimal">
+    </div>
+    <button class="btn btn-success" onclick="saveEditSell()">Save Changes</button>
+  </div>
+</div>
   <div class="modal">
     <div class="modal-header">
       <h2>Select Date</h2>
@@ -711,7 +837,10 @@ function renderDailyRecords() {
           <div class="amount" style="color:var(--danger)">-¥${(b.price * b.qty).toLocaleString()}</div>
           <div class="label">Card: ¥${(b.cardAmount || 0).toLocaleString()}</div>
         </div>
-        <button class="delete-btn" onclick="deleteRecord('buy','${b.id}')">Del</button>
+        <div class="record-actions">
+          <button class="edit-btn" onclick="editBuyRecord('${b.id}')">Edit</button>
+          <button class="delete-btn" onclick="deleteRecord('buy','${b.id}')">Del</button>
+        </div>
       </div>`;
   });
 
@@ -726,7 +855,10 @@ function renderDailyRecords() {
         <div class="record-amount">
           <div class="amount" style="color:var(--success)">+¥${s.amount.toLocaleString()}</div>
         </div>
-        <button class="delete-btn" onclick="deleteRecord('sell','${s.id}')">Del</button>
+        <div class="record-actions">
+          <button class="edit-btn" onclick="editSellRecord('${s.id}')">Edit</button>
+          <button class="delete-btn" onclick="deleteRecord('sell','${s.id}')">Del</button>
+        </div>
       </div>`;
   });
 
@@ -792,6 +924,7 @@ function renderCalendar() {
   }
 
   grid.innerHTML = html;
+  renderCalendarSummary();
 }
 
 function selectCalDate(y, m, d) {
@@ -942,6 +1075,115 @@ function renderStats() {
         `<tr><td>****${c.last4}</td><td>${c.type}</td><td>¥${c.total.toLocaleString()}</td><td>${c.count}</td></tr>`
       ).join('');
   }
+}
+
+// ===================== EDIT RECORDS =====================
+function editBuyRecord(id) {
+  const data = loadData();
+  const b = data.buys.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('editBuyId').value = b.id;
+  document.getElementById('editBuyModel').value = b.model;
+  document.getElementById('editBuyQty').value = b.qty;
+  document.getElementById('editBuyPrice').value = b.price;
+  document.getElementById('editBuyStatus').value = b.status;
+  document.getElementById('editBuyOrderNo').value = b.orderNo || '';
+  document.getElementById('editBuyBuyerName').value = b.buyerName || '';
+  document.getElementById('editBuyBuyerAddr').value = b.buyerAddr || '';
+  document.getElementById('editBuyEmail').value = b.email || '';
+  document.getElementById('editBuyCardType').value = b.cardType || 'VISA';
+  document.getElementById('editBuyCardLast4').value = b.cardLast4 || '';
+  document.getElementById('editBuyCardAmount').value = b.cardAmount || '';
+  document.getElementById('editBuyModal').classList.add('active');
+}
+
+function saveEditBuy() {
+  const id = document.getElementById('editBuyId').value;
+  const orderNo = document.getElementById('editBuyOrderNo').value.trim().toUpperCase();
+  const qty = parseInt(document.getElementById('editBuyQty').value) || 0;
+  const price = parseFloat(document.getElementById('editBuyPrice').value) || 0;
+  if (qty <= 0) { toast('Please enter quantity'); return; }
+  if (price <= 0) { toast('Please enter unit price'); return; }
+  if (orderNo && !/^W\d{10}$/.test(orderNo)) { toast('Order# must be W + 10 digits'); return; }
+
+  const data = loadData();
+  const b = data.buys.find(x => x.id === id);
+  if (!b) return;
+  b.model = document.getElementById('editBuyModel').value;
+  b.qty = qty;
+  b.price = price;
+  b.status = document.getElementById('editBuyStatus').value;
+  b.orderNo = orderNo;
+  b.buyerName = document.getElementById('editBuyBuyerName').value.trim();
+  b.buyerAddr = document.getElementById('editBuyBuyerAddr').value.trim();
+  b.email = document.getElementById('editBuyEmail').value.trim();
+  b.cardType = document.getElementById('editBuyCardType').value;
+  b.cardLast4 = document.getElementById('editBuyCardLast4').value.trim();
+  b.cardAmount = parseFloat(document.getElementById('editBuyCardAmount').value) || 0;
+  saveData(data);
+  closeModal('editBuyModal');
+  updateDateDisplay();
+  toast('Record updated!');
+}
+
+function editSellRecord(id) {
+  const data = loadData();
+  const s = data.sells.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('editSellId').value = s.id;
+  document.getElementById('editSellModel').value = s.model;
+  document.getElementById('editSellQty').value = s.qty;
+  document.getElementById('editSellAmount').value = s.amount;
+  document.getElementById('editSellModal').classList.add('active');
+}
+
+function saveEditSell() {
+  const id = document.getElementById('editSellId').value;
+  const qty = parseInt(document.getElementById('editSellQty').value) || 0;
+  const amount = parseFloat(document.getElementById('editSellAmount').value) || 0;
+  if (qty <= 0) { toast('Please enter quantity'); return; }
+  if (amount <= 0) { toast('Please enter sell amount'); return; }
+
+  const data = loadData();
+  const s = data.sells.find(x => x.id === id);
+  if (!s) return;
+  s.model = document.getElementById('editSellModel').value;
+  s.qty = qty;
+  s.amount = amount;
+  saveData(data);
+  closeModal('editSellModal');
+  updateDateDisplay();
+  toast('Record updated!');
+}
+
+// ===================== CALENDAR MONTHLY SUMMARY =====================
+function renderCalendarSummary() {
+  const year = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+  const data = loadData();
+
+  const monthBuys = data.buys.filter(b => {
+    const dt = new Date(b.date);
+    return dt.getFullYear() === year && dt.getMonth() === month;
+  });
+  const monthSells = data.sells.filter(s => {
+    const dt = new Date(s.date);
+    return dt.getFullYear() === year && dt.getMonth() === month;
+  });
+
+  const buyTotal = monthBuys.reduce((sum, b) => sum + (b.price * b.qty), 0);
+  const sellTotal = monthSells.reduce((sum, s) => sum + s.amount, 0);
+  const profit = sellTotal - buyTotal;
+  const buyQty = monthBuys.reduce((sum, b) => sum + b.qty, 0);
+
+  document.getElementById('calSummaryTitle').textContent = (month + 1) + '月 Summary';
+  document.getElementById('calBuyTotal').textContent = '¥' + buyTotal.toLocaleString();
+  document.getElementById('calSellTotal').textContent = '¥' + sellTotal.toLocaleString();
+  document.getElementById('calProfit').textContent = (profit >= 0 ? '+' : '') + '¥' + profit.toLocaleString();
+  document.getElementById('calBuyQty').textContent = buyQty;
+
+  const box = document.getElementById('calProfitBox');
+  box.className = 'stat-box ' + (profit >= 0 ? 'profit' : 'loss');
 }
 
 // ===================== DATA MANAGEMENT =====================
